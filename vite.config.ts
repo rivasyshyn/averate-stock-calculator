@@ -46,6 +46,7 @@ export default defineConfig({
       },
     }),
   ],
+  base: '/averate-stock-calculator/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
