@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import { Plus, Trash2, Settings2 } from 'lucide-react'
+import { Plus, Trash2, Settings2, Square, SquareCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -29,6 +29,11 @@ class StorageService {
   }
 }
 
+type Purchase = {
+  price: string;
+  quantity: string;
+  selected: boolean;
+};
 
 const STORAGE_KEYS = {
   PURCHASES: 'purchases',
@@ -38,15 +43,16 @@ const STORAGE_KEYS = {
 
 
 export default function StockCalculator() {
-  const [purchases, setPurchases] = useState(
+  const [purchases, setPurchases] = useState<Purchase[]>(
     StorageService.getItem(
       STORAGE_KEYS.PURCHASES,
       [
-        { price: '', quantity: '' },
-        { price: '', quantity: '' },
-        { price: '', quantity: '' }
+        { price: '', quantity: '', selected: true },
+        { price: '', quantity: '', selected: true },
+        { price: '', quantity: '', selected: true }
       ]
     ))
+  const [selectedPurchases, setSelectedPurchases] = useState<Purchase[]>([])
   const [averagePrice, setAveragePrice] = useState<number | null>(null)
   const [customProfit, setCustomProfit] = useState(
     StorageService.getItem(STORAGE_KEYS.CUSTOM_PROFIT, '')
@@ -70,14 +76,23 @@ export default function StockCalculator() {
   }
 
   const addPurchase = () => {
-    setPurchases([...purchases, { price: '', quantity: '' }])
+    setPurchases([...purchases, { price: '', quantity: '', selected: true }])
+  }
+
+  const selectPurchase = (index: number) => {
+    if (purchases.length > 1) {
+      const updatedPurchases = purchases.map((purchase, i) =>
+        i === index ? { ...purchase, selected: !purchase.selected } : purchase
+      );
+      setPurchases(updatedPurchases);
+    }
   }
 
   const clearPurchases = () => {
     setPurchases([
-      { price: '', quantity: '' },
-      { price: '', quantity: '' },
-      { price: '', quantity: '' }
+      { price: '', quantity: '', selected: true },
+      { price: '', quantity: '', selected: true },
+      { price: '', quantity: '', selected: true }
     ])
   }
 
@@ -93,7 +108,7 @@ export default function StockCalculator() {
     let totalQuantity = 0
     let heldQuantity = 0
     
-    for (const purchase of purchases) {
+    for (const purchase of selectedPurchases) {
       const price = parseFloat(purchase.price)
       const quantity = parseFloat(purchase.quantity)
       
@@ -117,7 +132,7 @@ export default function StockCalculator() {
     setAveragePrice(parseFloat(average.toFixed(4)))
     setTotalHeldQuantity(parseFloat(heldQuantity.toFixed(4)))
     setTotalSpent(parseFloat(totalCost.toFixed(4)))
-  }, [purchases, buyFeeEnabled, buyFeePercentage])
+  }, [selectedPurchases, buyFeeEnabled, buyFeePercentage])
 
   const spendingAmounts = useMemo(() => {
     return purchases.map(purchase => {
@@ -193,6 +208,10 @@ export default function StockCalculator() {
   }, [updateFeeLable])
 
   useEffect(() => {
+    setSelectedPurchases(purchases.filter(purchase => purchase.selected));
+  }, [purchases]);
+
+  useEffect(() => {
     StorageService.setItem(STORAGE_KEYS.PURCHASES, purchases)
   }, [purchases])
 
@@ -208,7 +227,7 @@ export default function StockCalculator() {
     <div className="container mx-auto p-0 sm:p-4">
       <Card className="border-0 sm:border w-full sm:w-auto mx-0 sm:mx-auto">
         <CardHeader className="px-4 sm:px-6">
-          <CardTitle className='text-3xl'>Stock Calculator</CardTitle>
+          <CardTitle className='text-3xl'>Stock Avaraging Calculator</CardTitle>
           <CardDescription>Calculate average buy price and profit targets</CardDescription>
         </CardHeader>
         <CardContent className="p-0 sm:p-6 w-full">
@@ -217,8 +236,8 @@ export default function StockCalculator() {
               <div>
                 <Collapsible>
                   <div className="flex items-center justify-between space-x-4 px-4">
-                    <h3 className="text-lg font-semibold mb-4">Fee Configuration</h3>
-                    <h3 className="text-lg mb-4">{feeConfigTitle}</h3>
+                    <h3 className="text-lg font-semibold">Fee Configuration</h3>
+                    <h3 className="text-lg">{feeConfigTitle}</h3>
                     <CollapsibleTrigger asChild>
                       <Button variant="ghost" size="sm">
                         <Settings2 className="mr-2 h-4 w-4" />
@@ -226,7 +245,7 @@ export default function StockCalculator() {
                     </CollapsibleTrigger>
                   </div>
                   <CollapsibleContent>
-                    <div className="space-y-4">
+                    <div className="space-y-4 mt-4">
                       <div className="flex items-center justify-between">
                         <Label htmlFor="buy-fee-toggle">Enable Buy Fee</Label>
                         <Switch
@@ -271,6 +290,7 @@ export default function StockCalculator() {
                   </CollapsibleContent>
                 </Collapsible>
               </div>
+              <h3 className="text-lg font-semibold mb-4">Positions</h3>
               <Table className="w-full">
                 <TableHeader>
                   <TableRow className="[&>th]:p-2 [&>th]:sm:p-4">
@@ -278,7 +298,7 @@ export default function StockCalculator() {
                     <TableHead>Quantity</TableHead>
                     <TableHead>Spending</TableHead>
                     {buyFeeEnabled && <TableHead>Held Quantity</TableHead>}
-                    <TableHead className="w-[100px]">Actions</TableHead>
+                    <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -312,7 +332,20 @@ export default function StockCalculator() {
                           {spendingAmounts[index].heldQuantity}
                         </TableCell>
                       )}
-                      <TableCell>
+                      <TableCell className="flex items-center space-x-2">
+                        <Button 
+                          variant="secondary" 
+                          size="sm" 
+                          onClick={() => selectPurchase(index)}
+                          aria-label={`Select purchase ${index + 1}`}
+                          className="p-1 sm:p-2"
+                        >
+                          {purchase.selected ?
+                          <SquareCheck className="h-3 w-3 sm:h-4 sm:w-4" />
+                          :
+                          <Square className="h-3 w-3 sm:h-4 sm:w-4" />
+                          }
+                        </Button>
                         <Button 
                           variant="destructive" 
                           size="sm" 
@@ -362,7 +395,7 @@ export default function StockCalculator() {
                   <TableBody>
                     {profitPercentages.map((percentage) => (
                       <TableRow key={percentage}>
-                        <TableCell className='text-left'>{percentage}%</TableCell>
+                        <TableCell className='text-center'>{percentage}%</TableCell>
                         <TableCell className='text-left'>{calculateProfitGross(percentage)??'-'}</TableCell>
                         <TableCell className='text-left'>{calculateProfitNet(percentage)??'-'}</TableCell>
                         <TableCell className='text-left'>
