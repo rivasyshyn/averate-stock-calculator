@@ -435,9 +435,9 @@ export default function StockCalculator() {
               </div>
               <div>
                 <h3 className="text-lg font-semibold mb-4">Calculate Profit</h3>
-                <div className="flex items-end gap-4">
-                  <div className="flex-grow">
-                    <Label htmlFor="desired-price">Desired Selling Price</Label>
+                <div className="flex items-end gap-4 items-center justify-center">
+                  <div className="flex-grow flex gap-4 p-4">
+                    <Label className='flex-grow' htmlFor="desired-price">Desired Selling Price</Label>
                     <Input
                       id="desired-price"
                       type="number"
@@ -449,7 +449,7 @@ export default function StockCalculator() {
                   </div>
                 </div>
                 {calculatedProfit !== null && (
-                  <div className="grid grid-cols-2 gap-2 mt-4 items-baseline">
+                  <div className="grid grid-cols-2 gap-2 mt-4 mb-4 items-baseline">
                     <p className="font-semibold text-right">Profit Percentage:</p>
                     <p className="text-left">{calculatedProfit}%</p>
 
