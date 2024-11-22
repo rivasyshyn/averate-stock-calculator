@@ -245,7 +245,7 @@ export default function StockCalculator() {
                     </CollapsibleTrigger>
                   </div>
                   <CollapsibleContent>
-                    <div className="space-y-4 mt-4">
+                    <div className="space-y-4 m-8">
                       <div className="flex items-center justify-between">
                         <Label htmlFor="buy-fee-toggle">Enable Buy Fee</Label>
                         <Switch
